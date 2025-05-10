@@ -1,6 +1,9 @@
 import { IncomingMessage, ServerResponse } from "http";
+import { UserWithoutId, PartialUser } from "./types/user";
+import { parseRequestBody } from "./utils/requestParser";
+import { handleGetRequest } from "./handlers";
 
-export const handleRequest = (
+export const handleRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
   parsedUrl: URL
@@ -21,6 +24,17 @@ export const handleRequest = (
   }
 
   if (path.startsWith("/api/user")) {
+    const body = await parseRequestBody<UserWithoutId | PartialUser>(req);
+
+    switch (method) {
+      case "GET":
+        return handleGetRequest(id, res);
+
+      default:
+        res.writeHead(405);
+        res.end(JSON.stringify({ error: "Method Not Allowed" }));
+        break;
+    }
   } else {
     res.writeHead(404);
     res.end(JSON.stringify({ error: "Not Found" }));
