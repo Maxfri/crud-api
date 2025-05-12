@@ -1,5 +1,5 @@
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
-import { User, UserWithoutId, PartialUser } from "../types/user";
+import { User, UserWithoutId } from "../types/user";
 
 export class UserService {
   private users: User[] = [];
@@ -22,18 +22,32 @@ export class UserService {
     return newUser;
   }
 
-  update(id: string, updateData: PartialUser): User {
-    if (!uuidValidate(id)) throw new Error("Invalid UUID");
+  updateUser(id: string, updateData: Partial<User>): User {
+    if (!uuidValidate(id)) {
+      throw new Error("Invalid user ID");
+    }
 
     const userIndex = this.users.findIndex((u) => u.id === id);
-    if (userIndex === -1) throw new Error("User not found");
+    if (userIndex === -1) {
+      throw new Error("User not found");
+    }
 
-    this.users[userIndex] = {
+    const updatedUser = {
       ...this.users[userIndex],
       ...updateData,
       id,
     };
-    return this.users[userIndex];
+
+    if (
+      typeof updatedUser.username !== "string" ||
+      typeof updatedUser.age !== "number" ||
+      !Array.isArray(updatedUser.hobbies)
+    ) {
+      throw new Error("Invalid user data structure");
+    }
+
+    this.users[userIndex] = updatedUser;
+    return updatedUser;
   }
 
   delete(id: string): boolean {
