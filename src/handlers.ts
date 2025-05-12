@@ -17,10 +17,7 @@ const sendJsonResponse = (
   res.end(JSON.stringify(data));
 };
 
-export const handleGetRequest = (
-  id: string | undefined,
-  res: ServerResponse
-) => {
+const handleGetRequest = (id: string | undefined, res: ServerResponse) => {
   try {
     if (id) {
       const user = userService.getById(id);
@@ -54,7 +51,7 @@ const validateUserData = (data: unknown): data is UserWithoutId => {
   );
 };
 
-export const handlePostRequest = async (body: unknown, res: ServerResponse) => {
+const handlePostRequest = async (body: unknown, res: ServerResponse) => {
   try {
     if (!validateUserData(body)) {
       res.writeHead(400, { "Content-Type": "application/json" });
@@ -79,20 +76,17 @@ export const handlePostRequest = async (body: unknown, res: ServerResponse) => {
   }
 };
 
-export const handlePutRequest = async (
+const handlePutRequest = async (
   id: string | undefined,
-  req: IncomingMessage,
+  body: PartialUser,
   res: ServerResponse
 ) => {
   try {
     if (!id) {
       return sendJsonResponse(res, 400, {
         error: "User ID is required",
-        path: req.url,
       });
     }
-
-    const body = await parseRequestBody<PartialUser>(req);
 
     const validation = validateUpdateData(body);
     if (!validation.isValid) {
@@ -154,6 +148,31 @@ const validateUpdateData = (
   };
 };
 
+const handleDeleteRequest = (id: string, res: ServerResponse) => {
+  try {
+    if (!id) {
+      return sendJsonResponse(res, 400, {
+        error: "Invalid UUID format",
+        details: `Provided ID: ${id}`,
+      });
+    }
+
+    const isDeleted = userService.deleteUser(id);
+
+    if (!isDeleted) {
+      return sendJsonResponse(res, 404, {
+        error: "User not found",
+        details: `User with ID ${id} does not exist`,
+      });
+    }
+
+    res.writeHead(204);
+    res.end();
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
+
 const handleServiceError = (error: unknown, res: ServerResponse) => {
   const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
@@ -169,4 +188,11 @@ const handleServiceError = (error: unknown, res: ServerResponse) => {
     error: errorMessage,
     type: "service_error",
   });
+};
+
+export {
+  handleGetRequest,
+  handlePostRequest,
+  handlePutRequest,
+  handleDeleteRequest,
 };

@@ -10,7 +10,8 @@ export class UserService {
 
   getById(id: string): User | undefined {
     if (!uuidValidate(id)) throw new Error("Invalid UUID");
-    return this.users.find((user) => user.id === id);
+    const user = this.users.find((user) => user.id === id);
+    return user;
   }
 
   create(userData: UserWithoutId): User {
@@ -50,10 +51,18 @@ export class UserService {
     return updatedUser;
   }
 
-  delete(id: string): boolean {
-    if (!uuidValidate(id)) throw new Error("Invalid UUID");
+  deleteUser(id: string): boolean {
+    if (!uuidValidate(id)) {
+      throw new Error("Invalid user ID format");
+    }
+
     const initialLength = this.users.length;
-    this.users = this.users.filter((u) => u.id !== id);
-    return this.users.length !== initialLength;
+    this.users = this.users.filter((user) => user.id !== id);
+
+    if (this.users.length === initialLength) {
+      throw new Error("User not found");
+    }
+
+    return true;
   }
 }

@@ -1,7 +1,12 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { UserWithoutId, PartialUser } from "./types/user";
 import { parseRequestBody } from "./utils/requestParser";
-import { handleGetRequest, handlePostRequest } from "./handlers";
+import {
+  handleDeleteRequest,
+  handleGetRequest,
+  handlePostRequest,
+  handlePutRequest,
+} from "./handlers";
 
 export const handleRequest = async (
   req: IncomingMessage,
@@ -10,7 +15,10 @@ export const handleRequest = async (
 ) => {
   const path = parsedUrl.pathname || "";
   const method = req.method || "";
-  const id = parsedUrl.searchParams.get("id") || "";
+
+  const pathSegments = path.split("/").filter(Boolean);
+  const id = pathSegments[2];
+
   const allowedOrigins = ["http://localhost:5173", "*"];
   const origin = req.headers.origin || "";
 
@@ -40,10 +48,10 @@ export const handleRequest = async (
         return handleGetRequest(id, res);
       case "POST":
         return handlePostRequest(body, res);
-      // case "PUT":
-      //   return handlePutRequest(id, body, res);
-      // case "DELETE":
-      //   return handleDeleteRequest(id, res);
+      case "PUT":
+        return handlePutRequest(id, body, res);
+      case "DELETE":
+        return handleDeleteRequest(id, res);
       default:
         res.writeHead(405);
         res.end(JSON.stringify({ error: "Method Not Allowed" }));
